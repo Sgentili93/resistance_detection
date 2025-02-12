@@ -1,0 +1,32 @@
+//@version=6 
+indicator("Resistance Detection", overlay=true)
+
+// User Parameters
+length = input.int(20, title="Period")
+deviation = input.float(1.5, title="Deviation in %")
+
+// Detecting Local Highs
+highestHigh = ta.highest(high, length)
+highestCondition = high == highestHigh
+
+// List of Resistances
+var float[] resistances = array.new_float()
+var float lastResistance = na
+
+if highestCondition
+    newResistance = high
+    found = false
+    for i = 0 to array.size(resistances) - 1
+        existingResistance = array.get(resistances, i)
+        if math.abs(existingResistance - newResistance) / existingResistance < deviation / 100
+            found := true
+            break
+    if not found
+        array.push(resistances, newResistance)
+        lastResistance := newResistance
+
+// Displaying Resistances
+for i = 0 to array.size(resistances) - 1
+    line.new(x1=bar_index - length, y1=array.get(resistances, i), x2=bar_index, y2=array.get(resistances, i), width=2, color=color.red, extend=extend.right)
+
+plot(lastResistance, style=plot.style_cross, color=color.red, title="Last Resistance")
